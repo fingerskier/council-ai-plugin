@@ -1,0 +1,10 @@
+# Lean council for a one-person company: focus, demand, distribution, money, risk.
+# Tuned for a solo founder's real failure modes, not big-company org design.
+# Copied into .council/council.yaml by `/council convene solo-founder`.
+name: solo-founder
+description: Lean council for a one-person company
+chair: founder-operator
+seats: [founder-operator, customer-advocate, growth-marketer, product-manager, cfo, legal-risk-advisor]
+work_budget:
+  max_turns: 10          # cap on take-turns rounds in `work`
+  max_tokens: 200000     # soft ceiling; chair wraps up when exceeded
