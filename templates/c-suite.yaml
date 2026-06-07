@@ -1,0 +1,9 @@
+# Executive decision council.
+# Copied into .council/council.yaml by `/council convene c-suite`.
+name: c-suite
+description: Executive decision council
+chair: ceo
+seats: [ceo, cfo, cto, coo, chief-counsel]
+work_budget:
+  max_turns: 10          # cap on take-turns rounds in `work`
+  max_tokens: 200000     # soft ceiling; chair wraps up when exceeded
