@@ -1,0 +1,12 @@
+# Example of a convened council (what `/council convene software-team` writes
+# to `.council/council.yaml`). This whole `sample-council/` tree mirrors a
+# `.council/` after a few sessions, so the memory/scratch/records formats are
+# concrete. See examples/README.md.
+name: software-team
+description: Software design + review council
+chair: staff-engineer
+seats: [staff-engineer, security-engineer, qa-engineer, product-manager]
+work_budget:
+  max_turns: 12          # hard cap on take-turns rounds in `work`
+  max_tokens: 250000     # soft ceiling; chair wraps up when exceeded
+  scratch_max_bytes: 200000  # stop trigger: scratchpad grows past this

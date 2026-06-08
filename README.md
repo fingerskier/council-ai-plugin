@@ -11,6 +11,7 @@ See [PLAN.md](./PLAN.md) for the full design.
 
 ```
 /council convene [template]    # create/recreate .council/ from a template; then edit the files
+/council info                  # print a concise table of the convened council's seats
 /council meeting "<task>"      # human-in-the-loop round-table; you conclude; chair synthesizes
 /council work "<task>"         # autonomous take-turns in a worktree until the chair calls it done
 ```
@@ -18,13 +19,16 @@ See [PLAN.md](./PLAN.md) for the full design.
 - **`convene`** stamps a template into a per-project `.council/` directory. From
   then on the council is local, editable files you own — tweak a seat's voice,
   add or drop a seat, retune the chair or the work budget.
+- **`info`** prints the convened roster — seat, title, voice, with the chair
+  marked — straight from the files. Read-only; it runs nothing.
 - **`meeting`** keeps you in the loop: seats speak in turn on a shared
   scratchpad, you steer each round, and when you conclude the chair synthesizes
   the conversation into `.council/records/`.
 - **`work`** takes you out of the loop: the chair picks who acts each turn and
   the seats take turns in a git worktree until the chair calls it done (or the
-  budget is spent), then synthesizes, records, and merges back or defers the
-  merge to you.
+  budget/scratch limit is hit, or you stop it), then synthesizes and records.
+  The chair never auto-merges — it hands you the worktree and the merge commands
+  to run when you're ready.
 
 ## Layout
 
@@ -42,7 +46,7 @@ The council it creates lives under `.council/` in your working repo:
 .council/
 ├── council.yaml      # active council: seats, chair, work budget
 ├── seats/*.md        # editable copies of the seat personalities
-├── memory/memory.md  # long-term council memory
+├── memory/*.md       # long-term council memory, one file per topic
 ├── scratch/          # ephemeral shared scratchpads (gitignored)
 ├── records/          # durable synthesized outputs
 └── worktrees/        # git worktrees for work sessions (gitignored)

@@ -48,6 +48,8 @@ council/
 │   ├── c-suite.yaml
 │   ├── solo-founder.yaml
 │   └── writing-lab.yaml
+├── examples/                            # reference snapshot of a convened .council/
+│   └── sample-council/                  # docs only — pins the on-disk formats
 └── README.md
 ```
 
@@ -58,27 +60,30 @@ council/
 ├── council.yaml          # active council: seats, chair, model routing, defaults
 ├── seats/                # editable copies of the seat personalities
 │   ├── ceo.md  cfo.md  ...
-├── memory/               # persistent council memory, carried across sessions
-│   └── memory.md
+├── memory/               # persistent council memory: one MD file per topic
+│   ├── <topic>.md
+│   └── <topic>.md
 ├── scratch/              # live shared scratchpads for meeting/work (ephemeral)
 │   └── <session-id>.md
 └── records/              # synthesized, durable outputs
     └── <timestamp>-<slug>.md
 ```
 
-`.council/scratch/` is working memory for a single session; `.council/records/` is the permanent file the chair writes when a meeting or work session concludes. `.council/memory/` is the council's long-term context, readable by seats on later invocations.
+`.council/scratch/` is working memory for a single session; `.council/records/` is the permanent file the chair writes when a meeting or work session concludes. `.council/memory/` is the council's long-term context, readable by seats on later invocations — **one markdown file per topic** (not a single log). When a meeting or work session concludes, the chair creates or updates the relevant topic file with the decision and its *why*. A worked example of all three lives in `examples/sample-council/`.
 
 ## 3. Personality file format
 
-Frontmatter mirrors the subagent schema so a seat maps cleanly onto a spawned worker (and, in headless mode, straight into an `--agents` JSON entry). The body *is* the system prompt.
+**Every seat is one persona file** — in the plugin's `personalities/` library, and (once convened) as an editable copy at `.council/seats/<name>.md`. The **filename matches the seat's `name`**, which is exactly the name listed in `council.yaml` (`council.yaml` says `qa-engineer` → the file is `.council/seats/qa-engineer.md`). The frontmatter is metadata; the **body *is* that seat's system prompt**, injected verbatim when the seat is spawned. This is the customization surface: to retune a voice, add a seat, or drop one, the user just edits these files — no code change.
+
+Frontmatter mirrors the subagent schema so a seat maps cleanly onto a spawned worker (and, in headless mode, straight into an `--agents` JSON entry).
 
 ```markdown
 ---
-name: cfo
+name: cfo                # must match the filename and the council.yaml entry
 title: Chief Financial Officer
-model: sonnet            # cheap voices on cheaper models; chair on opus
 voice: skeptical, numbers-driven, risk-averse
-tools: [read, web_search]   # optional per-seat tool restriction
+model: sonnet            # v1: documentation only — not enforced (see §3 note, §8)
+tools: [read, web_search]   # v1: documentation only — not enforced
 ---
 You are the CFO on this council. Evaluate every proposal through capital
 efficiency, runway, and downside risk. Quantify where possible. Name the
@@ -86,6 +91,8 @@ assumption that would have to be true for this to pay off. Be terse.
 ```
 
 Convention: keep the body a *persona*, not a task. The task is injected at runtime. Once convened, these live in `.council/seats/` and the user edits them freely.
+
+> **v1 model/effort policy.** The orchestrator does **not** manage per-seat models or effort in the first version — every seat (and the chair) runs on the user's current default model/effort. The `model:` and `tools:` fields are accepted and preserved as forward-looking documentation but are *not* enforced yet. Per-seat model routing for cost is deferred to a later phase (see §9 Phase 4). This keeps the orchestrator simple and avoids fighting the user's session settings.
 
 ## 4. Council templates (the "shape")
 
@@ -102,12 +109,13 @@ work_budget:
   max_tokens: 250000     # soft ceiling; chair wraps up when exceeded
 ```
 
-## 5. The three commands
+## 5. The commands
 
-The surface is three verbs. `convene` sets up; `meeting` and `work` put the council to work — the difference is whether you stay in the loop.
+The surface is four verbs. `convene` sets up; `info` reports the roster; `meeting` and `work` put the council to work — the difference between the last two is whether you stay in the loop.
 
 ```
 /council convene [template]    # create/recreate .council/ from a template; then edit the files
+/council info                  # show a concise table of the convened council's seats
 /council meeting "<task>"      # human-in-the-loop round-table; you conclude; chair synthesizes
 /council work "<task>"         # autonomous take-turns in a worktree until the chair calls it done
 ```
@@ -121,11 +129,29 @@ Stamps a template into `.council/`. Idempotent: re-running **recreates** the cou
 3. If `.council/` already exists, confirm before overwriting (so hand-edits aren't lost without consent), or merge non-destructively.
 4. Tell the user the files are theirs to tweak.
 
-No task runs. This is pure setup — the council only does work via the other two verbs.
+No task runs. This is pure setup — the council only does work via the other verbs.
+
+### `/council info`
+
+Read-only introspection of the convened council — no session, no spawn. The orchestrator reads `.council/council.yaml` and each `.council/seats/<seat>.md` frontmatter and prints a concise table so the user can see who's at the table at a glance:
+
+```
+Council: software-team — chair: staff-engineer
+Budget: max_turns 12 · max_tokens 250k · scratch 200k
+
+  Seat                Title                       Voice                        Chair
+  ──────────────────  ──────────────────────────  ───────────────────────────  ─────
+  staff-engineer      Staff Engineer              pragmatic, systems-level      ★
+  security-engineer   Security Engineer           adversarial, threat-first
+  qa-engineer         QA Engineer                 test-first, edge-case hunter
+  product-manager     Product Manager             user-value, scope-skeptical
+```
+
+Columns come straight from each seat's frontmatter (`name`, `title`, `voice`), with the chair marked. If `.council/` doesn't exist, it tells the user to `convene` first. Purely informational; it never spawns a worker.
 
 ### `/council meeting "<task>"`
 
-The deliberative, **human-in-the-loop** round-table. Seats speak **sequentially**, each one seeing everything said so far via a **shared scratchpad** (`.council/scratch/<id>.md`).
+The deliberative, **human-in-the-loop** round-table. **All convened seats speak** — there is no seat selection in `meeting` (decision #2); the whole table is the point. They speak **sequentially**, each one seeing everything said so far via a **shared scratchpad** (`.council/scratch/<id>.md`).
 
 Loop per round:
 1. Each seat speaks in turn, appending to the scratchpad; later seats react to earlier ones.
@@ -143,8 +169,8 @@ The **autonomous** mode, and the council's only work verb that runs unattended. 
 This scales: a quick gut-check resolves in a turn or two and reads like a fast multi-perspective answer; a bounded implementation grinds across many turns. Same verb, the chair just runs the loop as long as the task warrants.
 
 - Runs in a **git worktree** (see §6) so filesystem changes are isolated.
-- Continues until the **chair judges the task complete**, or a **budget is exceeded** (`max_turns` / `max_tokens` / wall-clock from `council.yaml`).
-- On finish, the chair **synthesizes** the outcome, **records** it to `.council/records/`, and **either merges the worktree back or defers to the user** for the merge decision.
+- Stops on **any** of four triggers (decision #3): **the chair says done**, a **timeout / budget exceeded** (`max_turns` / `max_tokens` / wall-clock from `council.yaml`), the **scratchpad grows past its size limit** (`scratch_max_bytes`), or the **user asks it to stop**.
+- On finish, the chair **synthesizes** the outcome and **records** it to `.council/records/`. The chair does **not** auto-merge: it **declares the work done and leaves the worktree branch in place**; the **user asks for the merge** when they're ready (decision #4). The chair hands over the exact merge/cleanup commands.
 
 - Use for: anything from a quick breadth scan to a bounded implementation/refactor/research task you want the council to grind on unattended.
 
@@ -156,10 +182,10 @@ This scales: a quick gut-check resolves in a turn or two and reads like a fast m
 
 ## 6. Isolation and the worktree
 
-`work` performs filesystem mutations, so it runs in a **dedicated git worktree** rather than the user's working tree. The seats edit there; the scratchpad and records still live in the main `.council/`. When the chair calls the task done:
+`work` performs filesystem mutations, so it runs in a **dedicated git worktree** rather than the user's working tree. The seats edit there; the scratchpad and records still live in the main `.council/`. When the chair calls the task done (decision #4 — **the chair never auto-merges**):
 
-- **Clean and confident →** chair merges the worktree branch back and reports.
-- **Conflicted, risky, or ambiguous →** chair **defers to the user**: leaves the branch/worktree in place and hands over the merge with a summary of what changed and why.
+- The chair **declares the work complete**, leaves the branch and worktree in place, and reports a summary of what changed and why.
+- The **user decides when to merge** and asks for it; the chair hands over the exact commands (`git merge --no-ff council/work-<id>`, then `git worktree remove .council/worktrees/<id>`). This keeps the human in control of what lands on their working tree.
 
 `meeting` defaults to **read-only** seats (no worktree) — it produces opinions and prose, not commits. A `meeting` that decides on changes typically hands off to a `work` session, which is where filesystem mutation happens.
 
@@ -178,37 +204,45 @@ Dissent preservation is the point of a council — a synthesis that erases disag
 - **Interactive (primary):** the orchestrator skill drives Task-tool subagents, building each worker's prompt from `.council/seats/<seat>.md` + injected task + the shared scratchpad. Sequential turn-taking for both `meeting` and `work`.
 - **Chair as router:** the chair selects which seats are relevant, picks who acts each turn, and decides termination (in `work`) or synthesizes on the user's call (in `meeting`). The chair is itself a seat (a personality file), so its routing/synthesis voice is tunable.
 - **Headless/SDK:** emit an `--agents` JSON object keyed by seat name, each personality body as the `prompt`. Same files, two delivery paths.
-- **Model routing for cost:** run voices on a cheaper model, reserve the strong model for the chair. A long `work` run can burn far more tokens than a normal session — `work_budget` in `council.yaml` is the explicit guardrail, and `work` honors it as a hard stop.
+- **Model/effort (v1):** seats and the chair all run on the **user's current default model/effort** — the orchestrator does not set per-seat models in the first version (see §3). The `model:` field is preserved as documentation for a later cost-routing phase (§9 Phase 4). A long `work` run can still burn far more tokens than a normal session — `work_budget` in `council.yaml` is the explicit guardrail, and `work` honors it as a hard stop.
 
 ## 9. MVP and phasing
 
-**Phase 1 — convene**
+**Phase 0 — scaffolding & decisions** *(this phase)*
+- worked example of a convened council under `examples/sample-council/` pinning the memory / scratch / record formats
+- `/council info` specified (read-only roster table)
+- v1 model/effort policy fixed: use the user's default, no per-seat routing
+- open decisions §10 resolved (#1–#5)
+
+**Phase 1 — convene & info**
 - `plugin.json`, orchestrator skill, personality format, templates
-- `/council convene` writing `.council/` (council.yaml + seats/ + dirs)
+- `/council convene` writing `.council/` (council.yaml + seats/ + dirs), confirm-then-overwrite on an existing council (#1)
+- `/council info` reading the convened roster into a table
 - the six prebuilt templates + the personality library
 
 **Phase 2 — meeting**
 - shared scratchpad under `.council/scratch/`
-- chair seat selection + sequential round-table with per-round user input
-- chair synthesis → `.council/records/`
+- **all seats** speak each round (no seat selection, #2) + per-round user input
+- chair synthesis → `.council/records/` + per-topic `.council/memory/*.md` write (#5)
 
 **Phase 3 — work**
 - autonomous take-turns with chair routing + termination
 - worktree isolation, budget guardrails (`max_turns`/`max_tokens`/wall-clock)
-- chair merge-or-defer; record + memory write-back
+- four stop triggers — chair-done / timeout / scratch-size / user-stop (#3)
+- chair declares done and hands off; **user asks for the merge** (#4); record + per-topic memory write-back
 
 **Phase 4 — polish**
 - `.council/memory/` read-back across sessions
-- per-seat model routing refinements
+- per-seat model routing (re-enables the `model:` field deferred in v1)
 - recreate-safety for `convene` (non-destructive merge of hand-edits)
 
-## 10. Open decisions (need your call)
+## 10. Resolved decisions
 
-1. **`convene` recreate semantics.** On an existing `.council/`, hard-overwrite-with-confirm, or three-way merge that preserves hand-edited seats? Plan assumes confirm-then-overwrite for MVP, non-destructive merge later.
-2. **Seat selection.** Chair picks the relevant subset, or default to *all* seats unless you name some? Plan assumes chair-selects in both `meeting` and `work`.
-3. **`work` termination authority.** Chair-decides-done as the only stop besides budget, or also a hard turn cap independent of the chair's judgment? Plan uses chair-decides plus budget ceiling.
-4. **Worktree merge default.** Should a clean `work` run auto-merge, or always defer the merge to the user? Plan auto-merges when clean, defers when not.
-5. **Memory growth.** Append-only `memory.md`, or structured/queryable memory the seats can search? Plan starts append-only.
+1. **`convene` recreate semantics → confirm-then-overwrite.** On an existing `.council/`, warn and require a yes, then recreate from the template. Non-destructive three-way merge of hand-edits is deferred to Phase 4.
+2. **Seat selection → no selection in `meeting`.** `meeting` always runs **all** convened seats (the whole table is the point). `work` keeps chair-selects-the-relevant-subset, since an autonomous run shouldn't pay for irrelevant voices.
+3. **`work` stop triggers → any of four.** The run stops on whichever comes first: **chair says done**, **timeout / budget exceeded**, **scratchpad size limit** (`scratch_max_bytes`), or **user requests stop**.
+4. **Worktree merge → chair declares done, user asks for merge.** No auto-merge. The chair finishes, leaves the branch/worktree in place, and the user merges when ready (the chair hands over the commands).
+5. **Memory → one MD file per topic.** Not an append-only log. After a meeting or work session, the chair creates or updates the appropriately named topic file under `.council/memory/`. (Structured/queryable memory remains a possible later evolution.)
 
 ---
 
