@@ -25,10 +25,21 @@ in SKILL.md** (see *Resolved gaps* below) — the merge and the fixes both lande
 
 → record: `records/20260607-210234-implement-phase-2.md` (set the format)
 → record: `records/20260607-213032-review-phase-2.md` (reviewed it; logged the gaps)
+→ record: `records/20260607-222944-review-phase-3.md` (review: commit-the-audit-artifacts gap)
 
-(Two back-links are intentional: this topic was set by one session and revised by
-a later one. Carrying back-link *history* rather than overwriting is the
-demonstrated resolution to "Hole A" below — the template should sanction it.)
+(Multiple back-links are intentional: this topic was set by one session and
+revised by later ones. Carrying back-link *history* rather than overwriting is
+the demonstrated resolution to "Hole A" below — the template sanctions it.)
+
+**Convention gap — now closed (Phase-3 review → pinned).** The format pinned how
+records/memory are *written* but never said they are **committed**, so a session's
+record, scratch archive, and memory could sit **untracked** while the conformance
+gates "passed" against files the tree under review doesn't carry (the Phase-3
+session shipped exactly that: its real audit trail was uncommitted while a
+*fictional* example's scratch archive was committed). **Fixed:** SKILL `work`
+step 8 and `meeting` step 6 now say "write **and commit** the record /
+scratch-archive / memory," and the gates run against the committed copies. The
+Phase-2/3 audit artifacts were committed in the same pass.
 
 ## Why
 
