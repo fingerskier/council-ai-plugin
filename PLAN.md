@@ -169,7 +169,7 @@ The **autonomous** mode, and the council's only work verb that runs unattended. 
 This scales: a quick gut-check resolves in a turn or two and reads like a fast multi-perspective answer; a bounded implementation grinds across many turns. Same verb, the chair just runs the loop as long as the task warrants.
 
 - Runs in a **git worktree** (see §6) so filesystem changes are isolated.
-- Stops on **any** of four triggers (decision #3): **the chair says done**, a **timeout / budget exceeded** (`max_turns` / `max_tokens` / wall-clock from `council.yaml`), the **scratchpad grows past its size limit** (`scratch_max_bytes`), or the **user asks it to stop**.
+- Stops on **any** of four triggers (decision #3): **the chair says done**, a **timeout / budget exceeded** (`max_turns` is the hard turn-count cap; `max_tokens` is a soft ceiling the chair wraps up against — from `council.yaml`), the **scratchpad grows past its size limit** (`scratch_max_bytes`), or the **user asks it to stop**.
 - On finish, the chair **synthesizes** the outcome and **records** it to `.council/records/`. The chair does **not** auto-merge: it **declares the work done and leaves the worktree branch in place**; the **user asks for the merge** when they're ready (decision #4). The chair hands over the exact merge/cleanup commands.
 
 - Use for: anything from a quick breadth scan to a bounded implementation/refactor/research task you want the council to grind on unattended.
@@ -204,7 +204,7 @@ Dissent preservation is the point of a council — a synthesis that erases disag
 - **Interactive (primary):** the orchestrator skill drives Task-tool subagents, building each worker's prompt from `.council/seats/<seat>.md` + injected task + the shared scratchpad. Sequential turn-taking for both `meeting` and `work`.
 - **Chair as router:** the chair selects which seats are relevant, picks who acts each turn, and decides termination (in `work`) or synthesizes on the user's call (in `meeting`). The chair is itself a seat (a personality file), so its routing/synthesis voice is tunable.
 - **Headless/SDK:** emit an `--agents` JSON object keyed by seat name, each personality body as the `prompt`. Same files, two delivery paths.
-- **Model/effort (v1):** seats and the chair all run on the **user's current default model/effort** — the orchestrator does not set per-seat models in the first version (see §3). The `model:` field is preserved as documentation for a later cost-routing phase (§9 Phase 4). A long `work` run can still burn far more tokens than a normal session — `work_budget` in `council.yaml` is the explicit guardrail, and `work` honors it as a hard stop.
+- **Model/effort (v1):** seats and the chair all run on the **user's current default model/effort** — the orchestrator does not set per-seat models in the first version (see §3). The `model:` field is preserved as documentation for a later cost-routing phase (§9 Phase 4). A long `work` run can still burn far more tokens than a normal session — `work_budget` in `council.yaml` is the explicit guardrail: `max_turns` and `scratch_max_bytes` are the hard stops (turn count and byte size are measured exactly), while `max_tokens` is a soft ceiling the chair wraps up against, since the orchestrator only has a rough token estimate.
 
 ## 9. MVP and phasing
 
@@ -227,7 +227,7 @@ Dissent preservation is the point of a council — a synthesis that erases disag
 
 **Phase 3 — work**
 - autonomous take-turns with chair routing + termination
-- worktree isolation, budget guardrails (`max_turns`/`max_tokens`/wall-clock)
+- worktree isolation, budget guardrails (`max_turns`/`max_tokens`/`scratch_max_bytes`)
 - four stop triggers — chair-done / timeout / scratch-size / user-stop (#3)
 - chair declares done and hands off; **user asks for the merge** (#4); record + per-topic memory write-back
 
