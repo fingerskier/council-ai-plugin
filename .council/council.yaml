@@ -1,0 +1,10 @@
+# Software design + review council. The default template for `convene`.
+# Copied into .council/council.yaml by `/council convene software-team`.
+name: software-team
+description: Software design + review council
+chair: staff-engineer
+seats: [staff-engineer, security-engineer, qa-engineer, product-manager]
+work_budget:
+  max_turns: 12          # cap on take-turns rounds in `work`
+  max_tokens: 250000     # soft ceiling; chair wraps up when exceeded
+  scratch_max_bytes: 200000  # stop trigger: halt `work` if the scratchpad grows past this
