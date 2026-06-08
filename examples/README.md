@@ -19,7 +19,9 @@ sample-council/
 ├── scratch/                                  # ephemeral per-session working memory (gitignored)
 │   └── 20260605-141200-rate-limiter.md       #   shown mid-meeting, Round 2 pending
 └── records/                                  # durable synthesized outputs, kept + committed
-    └── 20260603-093000-adopt-job-queue.md
+    ├── 20260603-093000-adopt-job-queue.md               #   Mode: meeting
+    ├── 20260606-101500-extract-retry-helper.md          #   Mode: work
+    └── 20260606-101500-extract-retry-helper.scratch.md  #   that work session's archived scratchpad
 ```
 
 Format conventions illustrated here:
@@ -35,10 +37,17 @@ Format conventions illustrated here:
   `meeting` or `work` session, the chair creates or updates the relevant
   topic file with the decision and its *why* — short, not a transcript.
 - **Scratchpad** is append-only, one file per session, named
-  `<YYYYMMDD-HHMMSS>-<slug>`. Every seat reads it before speaking. It is deleted
-  once its content is folded into a record, and never committed.
+  `<YYYYMMDD-HHMMSS>-<slug>`. Every seat reads it before speaking. A live
+  scratchpad lives under `scratch/` (gitignored, as shown by the rate-limiter
+  meeting still in progress); at session end the chair **archives** it to
+  `records/<id>.scratch.md` rather than deleting it, so it survives as the audit
+  artifact the dissent-preservation gate is checked against (see the
+  `extract-retry-helper` work session's `.scratch.md`).
 - **Record** is the durable synthesis: a single recommendation, the reasoning
-  trail, and **preserved dissent**. Named like the scratchpad it came from.
+  trail, and **preserved dissent**. Named like the scratchpad it came from. The
+  `Mode` field is `meeting` or `work`; both share the format. The work example
+  also shows a `user`-owned follow-up — `work` hands the merge to the human
+  rather than auto-merging.
 
 The cross-links are intentional: the `job-queue` meeting produced both
 `records/20260603-093000-adopt-job-queue.md` and the `memory/job-queue.md` topic

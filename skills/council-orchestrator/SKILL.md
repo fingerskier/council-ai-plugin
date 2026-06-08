@@ -170,10 +170,28 @@ turn or two; a bounded implementation grinds for many.
    ```
    Seats do their file work with this directory as cwd. (If not a git repo, work
    in place and note that isolation is unavailable.)
-3. **Open the scratchpad** `.council/scratch/<id>.md` with the task header.
+3. **Open the scratchpad** `.council/scratch/<id>.md` with a header. Pin the
+   fields and heading conventions exactly (see the archived example
+   `examples/sample-council/records/20260606-101500-extract-retry-helper.scratch.md`):
+   ```
+   # Scratchpad — work
+
+   <1-2 sentence note that this is ephemeral, append-only working memory.>
+
+   - **Task:** <the task>
+   - **Session:** <id>
+   - **Started:** <YYYY-MM-DD HH:MM>
+   - **Chair:** <chair seat name>
+   - **Seats (chair-selected subset — work does not run all seats):** <comma-separated seat names>
+
+   ---
+   ```
+   Then each turn is appended under a `## Turn N — <seat>` heading (work is
+   chair-routed turns, not rounds, and there is **no** user-input section).
 4. **Read the budget** from `council.yaml` `work_budget` (`max_turns`,
-   `max_tokens`, optional wall-clock, `scratch_max_bytes`). Track turns taken, a
-   rough token estimate, and the scratchpad size as you go.
+   `max_tokens`, `scratch_max_bytes`). Track turns taken and the scratchpad size
+   precisely; `max_tokens` you can only *estimate* roughly, so treat it as a soft
+   signal (see 6c), with `max_turns` as the deterministic turn-count cap.
 5. **Chair selects seats** relevant to the task; record in the scratchpad.
 6. **Take-turns loop (chair-driven):**
    a. The **chair** reads the scratchpad and decides **who acts next** and the
@@ -184,8 +202,13 @@ turn or two; a bounded implementation grinds for many.
    c. The **chair** evaluates whether to continue. **Stop on whichever of these
       four fires first:**
       - **chair says done** — the task is genuinely complete;
-      - **timeout / budget** — `max_turns`, `max_tokens`, or wall-clock exceeded;
-      - **scratchpad size** — the scratchpad has grown past `scratch_max_bytes`;
+      - **timeout / budget** — `max_turns` reached (the hard, deterministically
+        enforceable token proxy: a turn count you can track exactly). `max_tokens`
+        is a **soft ceiling, not a hard stop** — you only have a rough token
+        estimate, so when it's exceeded the chair "lands the plane" (wraps up at
+        the next clean stopping point) rather than halting mid-turn;
+      - **scratchpad size** — the scratchpad has grown past `scratch_max_bytes`
+        (a hard stop: byte size is measured exactly);
       - **user stop** — the user asked to halt the run.
       Otherwise, loop.
 7. **Synthesize:** spawn the chair over the full scratchpad + memory to produce
