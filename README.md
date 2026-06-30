@@ -116,10 +116,10 @@ See [PLAN.md](./PLAN.md) for the full design.
 
 ## Install
 
-This repo is dual-hosted:
+This repo is dual-hosted, but the host entrypoints are intentionally orthogonal:
 
 - Claude Code discovers `.claude-plugin/`, `commands/`, and `skills/`.
-- Codex discovers `.codex-plugin/plugin.json` and the same `skills/` directory.
+- Codex installs the standalone `plugins/council-codex/` plugin, which points back to the shared `skills/` directory.
 
 The root mechanics are shared. Both hosts read the bundled `templates/` and
 `personalities/`, then create or use the project-local `.council/` directory.
@@ -146,7 +146,7 @@ configuration pointing at this repo
 
 ### Codex
 
-Install this repo as a local Codex plugin, then invoke the skill conversationally:
+Install the standalone Codex plugin bundled at `plugins/council-codex/`. Its `.codex-plugin/plugin.json` is separate from the Claude plugin manifest and points at the shared orchestrator skill. Then invoke the skill conversationally:
 
 ```
 council convene software-team
@@ -185,10 +185,11 @@ meeting or work session is invoked.
 ## Layout
 
 ```
-.claude-plugin/plugin.json           # plugin manifest (listed in the fingerskier/claude-plugins marketplace)
-.codex-plugin/plugin.json            # Codex manifest; points at the same skills/
-commands/council.md                  # slash-command entry
-skills/council-orchestrator/SKILL.md # the orchestrator: routing, protocols, synthesis
+.claude-plugin/plugin.json                      # Claude plugin manifest (listed in the fingerskier/claude-plugins marketplace)
+.codex-plugin/plugin.json                       # root Codex manifest; points at the same skills/
+plugins/council-codex/.codex-plugin/plugin.json # standalone Codex plugin manifest; points at the shared skills/
+commands/council.md                             # Claude slash-command entry
+skills/council-orchestrator/SKILL.md            # the orchestrator: routing, protocols, synthesis
 personalities/*.md                   # the seat library (extensible)
 templates/*.yaml                     # presets: software-team, product-engineering-team, c-suite, solo-founder, writing-lab, hedge-fund-team
 ```

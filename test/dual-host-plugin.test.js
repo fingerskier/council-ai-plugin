@@ -17,7 +17,7 @@ test("Codex manifest exposes the shared skill directory", () => {
   const manifest = readJson(".codex-plugin/plugin.json");
 
   assert.equal(manifest.name, "council-claude-plugin");
-  assert.equal(manifest.version, "0.1.0");
+  assert.equal(manifest.version, "2026.6.30");
   assert.equal(manifest.skills, "./skills/");
   assert.equal(manifest.license, "Apache-2.0");
   assert.equal(manifest.author.name, "fingerskier");
@@ -35,6 +35,22 @@ test("Codex manifest exposes the shared skill directory", () => {
   assert.ok(manifest.interface.defaultPrompt.some((prompt) => prompt.startsWith("council convene")));
   assert.equal(Object.hasOwn(manifest, "mcpServers"), false);
   assert.equal(Object.hasOwn(manifest, "apps"), false);
+});
+
+test("standalone Codex plugin ships its own manifest", () => {
+  const codexManifest = readJson("plugins/council-codex/.codex-plugin/plugin.json");
+
+  assert.equal(codexManifest.name, "council-codex");
+  assert.equal(codexManifest.version, "0.1.0");
+  assert.equal(codexManifest.skills, "../../skills/");
+  assert.equal(codexManifest.license, "Apache-2.0");
+  assert.equal(codexManifest.author.name, "fingerskier");
+  assert.equal(codexManifest.interface.displayName, "Council for Codex");
+  assert.equal(codexManifest.interface.category, "Productivity");
+  assert.ok(codexManifest.interface.capabilities.includes("Multi-agent"));
+  assert.equal(Object.hasOwn(codexManifest, "hooks"), false);
+  assert.equal(Object.hasOwn(codexManifest, "mcpServers"), false);
+  assert.equal(Object.hasOwn(codexManifest, "apps"), false);
 });
 
 test("Claude and Codex entrypoints delegate to the same orchestrator", () => {
