@@ -1,5 +1,5 @@
 {
-  "name": "council-claude-plugin",
+  "name": "council",
   "version": "0.1.0",
   "description": "Convene a council of personality seats for deliberation, review, and bounded autonomous work.",
   "author": {
