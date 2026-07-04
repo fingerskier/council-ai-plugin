@@ -65,6 +65,22 @@ The **chair** is whichever seat `council.yaml` names. The chair routes (picks
 which seats are relevant, who speaks/acts next) and synthesizes. Read the
 chair's persona from `.council/seats/<chair>.md`.
 
+**Interrupted sessions.** A meeting or work run can die before it records — a
+crash, a closed terminal, a `work` the user walked away from. If you notice the
+leftovers on any verb, surface them; do **not** silently resume or delete:
+- A `$ROOT/.council/scratch/<id>.md` with **no** matching
+  `$ROOT/.council/records/<id>.md` is an unconcluded session. Offer **resume or
+  archive** — resume by reopening that scratchpad and continuing its loop, or
+  archive it to `$ROOT/.council/records/<id>.scratch.md` (the same audit-preserving
+  rename a clean conclude does) — never just delete it.
+- A `council/work-<id>` branch whose session never recorded is **unaudited**:
+  label it so, and offer archive-or-delete; never present it as mergeable, since
+  nothing synthesized or reviewed what it holds.
+- When you act on a scratchpad's header fields (Task, Session, Chair,
+  Started(epoch)), parse them from the **header block only** — the fields above the
+  first `---` — never by last-match across the file, since a later turn can quote a
+  field name and a naive last-match would read the wrong value.
+
 ---
 
 ## Verb: convene
@@ -163,6 +179,25 @@ workers, no writes.
    The example above sets no `max_wall_seconds`, so the banner omits it; it does set
    `memory_budget` (the default templates do), so ` · memory 8k` shows. Keep it to the
    table plus the header — no commentary unless the user asks.
+4. **Open follow-ups.** Below the table, list the council's unresolved follow-ups:
+   grep the records for lines that begin `- [ ]` (`grep -rn '^- \[ \]'
+   $ROOT/.council/records/*.md`, anchored at column 0 so prose bullets don't match)
+   and print one row each — the item text, its owner, and the record id it lives in.
+   Closing a follow-up is a **manual** `- [ ]` → `- [x]` edit by its owner in the
+   record file; `info` only *reports* the open set, it never closes anything. If
+   there are none, say so in one line.
+5. **Loose ends.** Flag leftover state a clean session would have cleaned up, so the
+   user can act on it — this is a **report, not a repair**; `info` writes nothing:
+   - **dangling scratchpads** — `$ROOT/.council/scratch/<id>.md` with no matching
+     `$ROOT/.council/records/<id>.md` (a meeting or work session that never
+     concluded, or crashed mid-run);
+   - **stale worktrees / work branches** — `$ROOT/.council/worktrees/<id>/`
+     directories and `council/work-<id>` branches (`git worktree list`,
+     `git branch --list 'council/work-*'`), noting for each whether its session has
+     a record (safe to remove) or none (**unaudited** — see the Preflight
+     interrupted-session note).
+   Print each as `<id> — <what it is> — <suggested action>`; if everything is clean,
+   say so in one line.
 
 ---
 
@@ -202,8 +237,12 @@ read-only instruction is **injected into every meeting seat's prompt** (see
    b. After the round, give the user a tight summary of what each seat said —
       a markdown table, one row per seat (`Seat | Position | Dissent?`), the
       position compressed to a line and the dissent column flagging any seat
-      that marked dissent this round. Then **ask for their input** with the
-      **AskUserQuestion** tool.
+      that marked dissent this round. Directly above the input prompt, show a
+      one-line size signal — `Round N · scratchpad NN KB` (the just-completed
+      round number and the current byte size of `.council/scratch/<id>.md`,
+      rounded to KB) — so the user can feel the meeting growing. It is a **signal,
+      not a knob**: a meeting has no budget field and the human is its stop trigger
+      by design. Then **ask for their input** with the **AskUserQuestion** tool.
 
       The user has **three** real choices, and the prompt must make all three
       legible — the buried one is the steer, so name it in the question body
@@ -284,11 +323,20 @@ turn or two; a bounded implementation grinds for many.
    ---
    ```
    Then each turn is appended under a `## Turn N — <seat>` heading (work is
-   chair-routed turns, not rounds, and there is **no** user-input section).
+   chair-routed turns, not rounds, and there is **no** user-input section). `N`
+   counts **seat** actions. The chair's own entries for a turn — written **inline
+   by the orchestrator**, not spawned — share that turn's number and take a role
+   suffix: `## Turn N — <chair> — routing` (written *before* the seat acts: who
+   acts next and the concrete sub-goal) and `## Turn N — <chair> — adjudication`
+   (written *after*: the continue/stop call). Every non-chair turn's sub-goal is
+   the one named in its nearest preceding `— routing` entry. Because those chair
+   entries are inline and never advance `N`, `max_turns` counts seat actions only
+   (step 6c).
 4. **Read the budget** from `council.yaml` `work_budget` (`max_turns`,
    `scratch_max_bytes`, and the **optional** `max_wall_seconds`). `max_turns` and
-   `scratch_max_bytes` are hard stops you can measure exactly — track turns taken
-   and the scratchpad byte size as you go. For `max_wall_seconds`: record
+   `scratch_max_bytes` are hard stops you can measure exactly — track **seat**
+   turns taken (the chair's inline routing/adjudication entries don't count — see
+   step 6c) and the scratchpad byte size as you go. For `max_wall_seconds`: record
    `date +%s` at session open into the header `**Started (epoch):**` field, and at
    each turn boundary compare a fresh `date +%s` against it. It is **armed only
    when present and > 0** — `absent | 0 | negative → unarmed` (absence is the
@@ -299,32 +347,44 @@ turn or two; a bounded implementation grinds for many.
    fire — `max_turns` bounds how long a run goes; token spend rides along with it.)
 5. **Chair selects seats** relevant to the task; record in the scratchpad.
 6. **Take-turns loop (chair-driven):**
-   a. The **chair** reads the scratchpad and decides **who acts next** and the
-      concrete sub-goal for this turn.
-   b. Spawn that seat as a worker (see *Spawning a seat*) with the task, the
-      sub-goal, and the scratchpad, pointed at the worktree by its **absolute
-      path** — most worker tools can't set the worker's cwd, so the worktree is named
-      in the prompt, not as a working directory. It may read/edit files and run
-      commands **under** the worktree. After it returns, **verify its edits landed
-      in the worktree, not the main tree**: `git -C .council/worktrees/<id> status`
-      should show the changes while the main working tree stays clean. Append its
-      turn to the scratchpad.
-   c. The **chair** evaluates whether to continue. **Stop on whichever of these
-      five fires first:**
+   a. **Route inline — no spawn.** Acting *as* the chair, the orchestrator reads
+      the scratchpad, decides **who acts next** and the concrete sub-goal for this
+      turn, and writes that decision itself under a `## Turn N — <chair> —
+      routing` heading. Routing is the one chair judgment that is never a spawn —
+      that is what halves the per-turn spawn count and keeps `max_turns` honest;
+      the chair is spawned only to **synthesize** (step 7) and, for a genuinely
+      contested call, to **adjudicate**.
+   b. **Show progress, then spawn.** First emit a one-line progress signal naming
+      the turn, seat, and sub-goal — `Turn 3/12 — qa-engineer: <sub-goal>` (the
+      denominator is `max_turns`, and because routing is inline the count is
+      honest — seat work remaining, not routing overhead). Then spawn that seat as
+      a worker (see *Spawning a seat*) with the task, the sub-goal, and the
+      scratchpad, pointed at the worktree by its **absolute path** — most worker
+      tools can't set the worker's cwd, so the worktree is named in the prompt, not
+      as a working directory. It may read/edit files and run commands **under** the
+      worktree. After it returns, **verify its edits landed in the worktree, not
+      the main tree**: `git -C .council/worktrees/<id> status` should show the
+      changes while the main working tree stays clean. Append its turn to the
+      scratchpad under `## Turn N — <seat>`.
+   c. **Adjudicate.** Acting as the chair again, the orchestrator evaluates
+      whether to continue and records the call inline under `## Turn N — <chair> —
+      adjudication` (a genuinely contested done-call may instead spawn the chair
+      for a full-persona ruling on the record; the routine continue/stop check is
+      inline). **Stop on whichever of these five fires first:**
       - **chair says done** — the task is genuinely complete;
       - **budget** — `max_turns` reached: a hard stop, a turn count you track
-        exactly. (This is the run-length cap; there is no separate token cap —
-        see step 4.);
+        exactly. It counts **spawned seat turns only** — the chair's inline
+        `— routing` and `— adjudication` entries share the seat turn's number `N`
+        and never advance it, so `max_turns: 12` buys twelve seat actions, not
+        twelve minus whatever routing overhead the chair incurred. (This is the
+        run-length cap; there is no separate token cap — see step 4.);
       - **scratchpad size** — the scratchpad has grown past `scratch_max_bytes`
         (a hard stop: byte size is measured exactly);
-      - **wall-clock** — `max_wall_seconds` is set and `now − Started(epoch) ≥
-        max_wall_seconds`, where `now` is `date +%s` read at this turn boundary
-        and `Started(epoch)` is the `date +%s` recorded in the scratchpad header
-        at session open. A hard stop measured exactly — but **only at turn
-        boundaries**: it bounds when the *next* turn starts, not a mid-turn
-        interrupt, so a turn already running finishes first and total time can
-        overshoot the budget by up to one turn's duration. **Unarmed** when the
-        field is absent, `0`, or negative;
+      - **wall-clock** — `max_wall_seconds` is set and, at this turn boundary,
+        `now − Started(epoch) ≥ max_wall_seconds`. A hard stop, but only at turn
+        boundaries (a running turn finishes first, so total time can overshoot by
+        up to one turn's duration), and **unarmed** when the field is absent, `0`,
+        or negative — step 4 has the full arming and granularity mechanics;
       - **user stop** — the user asked to halt the run.
       Otherwise, loop.
 7. **Synthesize:** spawn the chair over the full scratchpad + memory to produce
@@ -375,8 +435,16 @@ Spawn each seat with the host's worker tool:
   `wait_agent` for the sequential seat result, then `close_agent` after the
   result is captured.
 
-Meeting and work are sequential, so spawn one seat at a time and wait. Build the
-prompt as:
+Meeting and work are sequential, so spawn one seat at a time and wait.
+
+**If a seat spawn fails** (the worker errors out or returns nothing), don't abort
+the round: note the failure under that seat's `## Round N` / `## Turn N` heading in
+the scratchpad (one line — what failed), then continue with the next seat. Retry a
+failed seat **once**; if it fails a second time, **skip it** for the rest of the
+session and record that it was skipped — a meeting or work run degrades to the
+seats that answer rather than stalling on the one that won't.
+
+Build the prompt as:
 
 ```
 You are acting as a council seat. Fully adopt this persona — its priorities,
@@ -421,9 +489,11 @@ run on the user's current default model/effort. A seat's `model:` and `tools:`
 frontmatter are documentation for now — preserve them, don't enforce them. (Per-
 seat model routing for cost is declined — see PLAN §9; no phase currently
 enforces it.) The **chair** is spawned the same
-way as any seat, but its task is to *route* (pick who's next / decide done) or to
-*synthesize* (unified recommendation + dissents) rather than to give one more
-opinion.
+way as any seat, but **only to *synthesize*** (unified recommendation + dissents)
+— and, for a genuinely contested call in `work`, to render an *adjudication*
+ruling on the record. **Routing is never a spawn:** the orchestrator writes the
+chair's who's-next / decide-done entries inline (see `work` step 6a/6c), so a
+chair worker starts for synthesis, not to pick the next seat.
 
 ### Memory injection (two-tier)
 
