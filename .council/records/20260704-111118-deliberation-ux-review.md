@@ -51,20 +51,20 @@ Chair ruling this session: routing is **orchestrator-inline** — the orchestrat
 
 ## Follow-ups
 
-- [ ] Pin the audit-commit path allowlist in SKILL.md, both verbs — `git add .council/records/<id>.md .council/records/<id>.scratch.md .council/memory/`, never `-A`/`-am` (owner: security-engineer)
-- [ ] Add the work step-6b failure action (halt, report escaped paths, never commit) and the session-start `git status --porcelain` snapshot check at turn boundaries (owner: security-engineer)
-- [ ] Add the secret layers: seat-prompt "never quote credential or secret values" line + pre-commit secret-shape grep in the commit step (owner: security-engineer)
-- [ ] Fix the README: delete the duplicated intro paragraph; single install narrative under Getting started; "## Install" shrinks to a dual-host note (owner: product-manager)
+- [ ] Pin the audit-commit path allowlist in SKILL.md, both verbs — `git add .council/records/<id>.md .council/records/<id>.scratch.md .council/memory/`, never `-A`/`-am` (owner: security-engineer) — declined: security reframed to docs-only per user 2026-07-04 (local tool; the audit trail is the user's own repo)
+- [ ] Add the work step-6b failure action (halt, report escaped paths, never commit) and the session-start `git status --porcelain` snapshot check at turn boundaries (owner: security-engineer) — declined: security reframed to docs-only per user 2026-07-04
+- [ ] Add the secret layers: seat-prompt "never quote credential or secret values" line + pre-commit secret-shape grep in the commit step (owner: security-engineer) — declined: security reframed to docs-only per user 2026-07-04
+- [x] Fix the README: delete the duplicated intro paragraph; single install narrative under Getting started; "## Install" shrinks to a dual-host note (owner: product-manager)
 - [ ] Genuine stranger cold-read of the fixed README, then tag v0.1 (owner: user)
-- [ ] Ship `test/council-conformance.test.js`: both gates over examples + dogfood, column-0 anchors, pinned two-id grandfather list, secret-shape scan, history invariant armed at a pinned cutoff SHA once the allowlist lands (owner: qa-engineer)
-- [ ] Wire the tests: `package.json` with `"test": "node --test test/"` plus a minimal CI workflow or README line (owner: qa-engineer)
-- [ ] Pin routing-as-orchestrator-inline, the ` — routing`/` — adjudication` entry form, and `max_turns` = spawned seat turns only, in SKILL.md (owner: staff-engineer)
-- [ ] Ship the two verb signals: `work` per-turn progress line; meeting `Round N · scratchpad NN KB` header above the Conclude/Continue prompt (owner: staff-engineer)
-- [ ] Grow `info` into the status page: Open follow-ups (grep `^- \[ \]` — item, owner, record id) plus dangling scratchpads/worktrees; one spec sentence pinning manual close (owner: product-manager)
-- [ ] Spec the interrupted-session story: preflight resume-or-archive for orphaned scratchpads, unaudited-branch labeling with archive-or-delete, header-block-only parsing of acted-on fields (owner: staff-engineer)
-- [ ] Spec seat-spawn failure handling: note under the seat's heading, continue the round, skip a twice-failed seat (owner: staff-engineer)
-- [ ] Spawn Claude meeting seats with a read-only agent type where the host offers one (owner: security-engineer)
-- [ ] Dedup SKILL.md's stop-trigger prose: state once, reference from the second site (owner: staff-engineer)
+- [x] Ship `test/council-conformance.test.js`: both gates over examples + dogfood, column-0 anchors, pinned two-id grandfather list, secret-shape scan, history invariant armed at a pinned cutoff SHA once the allowlist lands (owner: qa-engineer) — shipped format-conformance only; secret-shape scan + history invariant dropped with the security reframe (docs-only) per user 2026-07-04
+- [x] Wire the tests: `package.json` with `"test": "node --test test/"` plus a minimal CI workflow or README line (owner: qa-engineer) — done via package.json + README line, no CI, per user 2026-07-04 (script is `node --test` — this Node's directory-arg form is broken)
+- [x] Pin routing-as-orchestrator-inline, the ` — routing`/` — adjudication` entry form, and `max_turns` = spawned seat turns only, in SKILL.md (owner: staff-engineer)
+- [x] Ship the two verb signals: `work` per-turn progress line; meeting `Round N · scratchpad NN KB` header above the Conclude/Continue prompt (owner: staff-engineer)
+- [x] Grow `info` into the status page: Open follow-ups (grep `^- \[ \]` — item, owner, record id) plus dangling scratchpads/worktrees; one spec sentence pinning manual close (owner: product-manager)
+- [x] Spec the interrupted-session story: preflight resume-or-archive for orphaned scratchpads, unaudited-branch labeling with archive-or-delete, header-block-only parsing of acted-on fields (owner: staff-engineer)
+- [x] Spec seat-spawn failure handling: note under the seat's heading, continue the round, skip a twice-failed seat (owner: staff-engineer)
+- [ ] Spawn Claude meeting seats with a read-only agent type where the host offers one (owner: security-engineer) — declined: dropped with the security reframe (docs-only) per user 2026-07-04; meetings stay read-only via the injected prompt line, and Claude's Task has no clean read-only general-purpose type to swap in without clobbering the persona
+- [x] Dedup SKILL.md's stop-trigger prose: state once, reference from the second site (owner: staff-engineer)
 
 → memory updated: `memory/session-workflow-roadmap.md`
 → memory updated: `memory/publish-readiness.md`
