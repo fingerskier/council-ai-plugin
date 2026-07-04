@@ -110,54 +110,34 @@ records. (You can also convene directly inside an existing project's repo —
 
 Use it when a decision is worth more than one opinion: a design review, a "should we ship this?" gut-check, an autonomous task you want pressure-tested as it's built.
 
-A Claude Code and Codex plugin that convenes a **council** of named **seats**, each with a unique personality, and puts them to work in an interactive **meeting** or an autonomous **work** session. The **chair** routes the others and synthesizes a single answer, keeping any dissent on the record.
-
 See [PLAN.md](./PLAN.md) for the full design.
 
 ## Install
 
-This repo is dual-hosted, but the host entrypoints are intentionally orthogonal:
+This repo is dual-hosted; the host entrypoints are intentionally orthogonal, but
+both read the same bundled `templates/` and `personalities/` and create the same
+project-local `.council/`. There is no build step.
 
-- Claude Code discovers `.claude-plugin/`, `commands/`, and `skills/`.
-- Codex installs the standalone `plugins/council-codex/` plugin, which points back to the shared `skills/` directory.
+- **Claude Code** discovers `.claude-plugin/`, `commands/`, and `skills/`. Install
+  it from the marketplace exactly as shown in
+  [Getting started](#getting-started) above — `/plugin marketplace add
+  fingerskier/claude-plugins`, then `/plugin install council@fingerskier-plugins`
+  — or load a clone for a single session with
+  `claude --plugin-dir council-claude-plugin`.
+- **Codex** installs the standalone `plugins/council-codex/` plugin, whose
+  `.codex-plugin/plugin.json` points back at the shared `skills/` directory. Codex
+  does not use Claude slash commands; invoke the skill conversationally and the
+  `council-orchestrator` skill maps these to the same four verbs, using Codex
+  sub-agents for seats:
 
-The root mechanics are shared. Both hosts read the bundled `templates/` and
-`personalities/`, then create or use the project-local `.council/` directory.
-There is no build step.
+  ```
+  council convene software-team
+  council info
+  council meeting "should we adopt a job queue?"
+  council work "implement the retry helper and preserve dissents"
+  ```
 
-### Claude Code
-
-```bash
-# Try it locally from a clone (no install):
-git clone https://github.com/fingerskier/council-claude-plugin
-claude --plugin-dir council-claude-plugin
-```
-
-Then, in any repo:
-
-```
-/council convene          # stamp a .council/ from the default software-team template
-/council meeting "should we adopt a job queue?"
-```
-
-To install it permanently, add the plugin via Claude Code's plugin/marketplace
-configuration pointing at this repo
-(`https://github.com/fingerskier/council-claude-plugin`).
-
-### Codex
-
-Install the standalone Codex plugin bundled at `plugins/council-codex/`. Its `.codex-plugin/plugin.json` is separate from the Claude plugin manifest and points at the shared orchestrator skill. Then invoke the skill conversationally:
-
-```
-council convene software-team
-council info
-council meeting "should we adopt a job queue?"
-council work "implement the retry helper and preserve dissents"
-```
-
-Codex does not use Claude slash commands. The `council-orchestrator` skill maps
-those prompts to the same four verbs and uses Codex sub-agents for seats when a
-meeting or work session is invoked.
+Run the tests with `npm test` (or `node --test`) from the repo root.
 
 ## Commands
 
@@ -225,15 +205,31 @@ You are the Historian on this council. Surface the relevant precedent...
 Then add `historian` to a template's `seats:` list, or to
 `.council/council.yaml`. No code change required.
 
-## Trust model
+## Security & trust (local-only)
 
-The seat and memory files are **prompt material, not sandboxed input**. The
-orchestrator injects the contents of `.council/seats/*.md` and
-`.council/memory/*.md` verbatim into each subagent's prompt, and a `work`
-subagent then runs `bash` and edits files inside its worktree. Treat those files
-as **trusted code you would run yourself** — only adopt seat or memory content
-from a source you trust. The worktree keeps `work` edits scoped by convention,
-but it is a soft guardrail enforced in the prompt, **not a security boundary**.
+`council` is a **local tool**: you run it on your own machine, against your own
+repos, with seats and memory *you* author or adopt on purpose. The
+`.council/seats/*.md` and `.council/memory/*.md` files are **prompt material you
+control** — the orchestrator injects them verbatim into each subagent, the same
+way a script you wrote runs the commands you put in it. So the trust posture is
+the ordinary one for anything you run locally, with two things worth stating
+plainly:
+
+- **The `work` worktree is a convention, not a sandbox.** A `work` seat runs
+  `bash` and edits files under `.council/worktrees/<id>/`, and that scoping is
+  enforced in the prompt, not by an OS boundary. The council never auto-merges —
+  it hands you the branch and the merge commands — so **review the diff before you
+  merge**. You own the merge.
+- **The council commits its own audit trail** (record, archived scratchpad,
+  memory) to your current branch. Keep secrets out of the files seats read and
+  write — the same discipline any repo-reading tool warrants — rather than, say,
+  pasting a live token into a scratchpad the council is about to record.
+
+**Deferred, out of scope for local use:** hardening against *untrusted* seat or
+memory content — prompt-injection defenses, wrapping injected text in
+`<untrusted>` delimiters — only matters if councils ever become shareable, or if
+you adopt a `.council/` from a source you don't control. Until then the one rule
+that covers it is: **don't adopt a `.council/` you wouldn't run as code.**
 
 > **Shell note:** the `work` session's helpers (`date +%s`, `mkdir -p`,
 > `git worktree`) assume a POSIX shell. They run in Claude Code's bundled Bash
