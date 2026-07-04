@@ -22,6 +22,19 @@ rewrite — value-prop "why a council" hook, Install section, Trust-model note (
 a POSIX-shell caveat), corrected Status.
 → record: `records/20260608-082623-publish-readiness.md`
 
+**Revision — the bar currently fails; README contradiction blocks the tag.** The
+deliberation/UX review's cold read found the README **contradicts itself on
+install source**: "Getting started §2" (add marketplace `fingerskier/claude-plugins`,
+install `council@fingerskier-plugins`) vs "## Install" (marketplace pointing at
+this repo); the Layout section corroborates §2, so the `## Install` sentence is
+the likely defect. A stranger facing two conflicting install paths has to ask —
+failing the bar's second clause — so **the v0.1 tag is blocked** until the fix
+lands (minutes: delete the duplicated intro paragraph, make Getting started the
+sole install narrative, shrink `## Install` to a dual-host note). The council's
+read partially discharges follow-up #1, but the bar wants a genuine stranger's
+cold read *after* the fix — that follow-up stays open until then.
+→ record: `records/20260704-111118-deliberation-ux-review.md` (README install contradiction → blocks tag)
+
 ## Why
 
 A solo agent doesn't disagree with itself, and the same risk applies to "is this
