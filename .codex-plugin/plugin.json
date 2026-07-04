@@ -1,6 +1,6 @@
 {
   "name": "council-claude-plugin",
-  "version": "2026.6.30",
+  "version": "2026.7.4",
   "description": "Convene a council of personality seats for deliberation, review, and bounded autonomous work.",
   "author": {
     "name": "fingerskier"

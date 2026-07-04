@@ -1,6 +1,6 @@
 {
   "name": "council-codex",
-  "version": "0.1.0",
+  "version": "2026.7.4",
   "description": "Codex-native Council plugin that convenes personality-seat councils without depending on the Claude plugin manifest.",
   "author": {
     "name": "fingerskier"

@@ -17,7 +17,7 @@ test("Codex manifest exposes the shared skill directory", () => {
   const manifest = readJson(".codex-plugin/plugin.json");
 
   assert.equal(manifest.name, "council-claude-plugin");
-  assert.equal(manifest.version, "2026.6.30");
+  assert.equal(manifest.version, "2026.7.4");
   assert.equal(manifest.skills, "./skills/");
   assert.equal(manifest.license, "Apache-2.0");
   assert.equal(manifest.author.name, "fingerskier");
@@ -41,7 +41,7 @@ test("standalone Codex plugin ships its own manifest", () => {
   const codexManifest = readJson("plugins/council-codex/.codex-plugin/plugin.json");
 
   assert.equal(codexManifest.name, "council-codex");
-  assert.equal(codexManifest.version, "0.1.0");
+  assert.equal(codexManifest.version, "2026.7.4");
   assert.equal(codexManifest.skills, "../../skills/");
   assert.equal(codexManifest.license, "Apache-2.0");
   assert.equal(codexManifest.author.name, "fingerskier");
