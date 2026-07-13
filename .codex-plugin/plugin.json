@@ -1,12 +1,12 @@
 {
-  "name": "council-claude-plugin",
+  "name": "council-ai-plugin",
   "version": "2026.7.4",
   "description": "Convene a council of personality seats for deliberation, review, and bounded autonomous work.",
   "author": {
     "name": "fingerskier"
   },
-  "homepage": "https://github.com/fingerskier/council-claude-plugin",
-  "repository": "https://github.com/fingerskier/council-claude-plugin",
+  "homepage": "https://github.com/fingerskier/council-ai-plugin",
+  "repository": "https://github.com/fingerskier/council-ai-plugin",
   "license": "Apache-2.0",
   "keywords": [
     "council",

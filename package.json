@@ -1,5 +1,5 @@
 {
-  "name": "council-claude-plugin",
+  "name": "council-ai-plugin",
   "version": "2026.7.4",
   "private": true,
   "description": "A dual-host (Claude Code + Codex) plugin that convenes a council of named seats plus a chair.",

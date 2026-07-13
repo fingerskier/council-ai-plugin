@@ -56,8 +56,8 @@ step, and `/council` is now available in every Claude Code session.
 single session instead:
 
 ```bash
-git clone https://github.com/fingerskier/council-claude-plugin
-claude --plugin-dir council-claude-plugin
+git clone https://github.com/fingerskier/council-ai-plugin
+claude --plugin-dir council-ai-plugin
 ```
 
 ### 3. Set up your first council
@@ -74,7 +74,7 @@ claude
 ```
 
 (If you took the try-it-without-installing path in step 2, start Claude Code
-with `claude --plugin-dir ../council-claude-plugin` instead, adjusting the path
+with `claude --plugin-dir ../council-ai-plugin` instead, adjusting the path
 to wherever you cloned it.)
 
 Inside Claude Code, convene the council:
@@ -123,7 +123,7 @@ project-local `.council/`. There is no build step.
   [Getting started](#getting-started) above — `/plugin marketplace add
   fingerskier/claude-plugins`, then `/plugin install council@fingerskier-plugins`
   — or load a clone for a single session with
-  `claude --plugin-dir council-claude-plugin`.
+  `claude --plugin-dir council-ai-plugin`.
 - **Codex** installs the standalone `plugins/council-codex/` plugin, whose
   `.codex-plugin/plugin.json` points back at the shared `skills/` directory. Codex
   does not use Claude slash commands; invoke the skill conversationally and the

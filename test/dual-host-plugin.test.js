@@ -16,7 +16,7 @@ function readJson(relativePath) {
 test("Codex manifest exposes the shared skill directory", () => {
   const manifest = readJson(".codex-plugin/plugin.json");
 
-  assert.equal(manifest.name, "council-claude-plugin");
+  assert.equal(manifest.name, "council-ai-plugin");
   assert.equal(manifest.version, "2026.7.4");
   assert.equal(manifest.skills, "./skills/");
   assert.equal(manifest.license, "Apache-2.0");
